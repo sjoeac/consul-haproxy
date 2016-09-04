@@ -1,0 +1,21 @@
+#!/usr/bin/perl
+
+use LWP::Simple;
+use JSON;
+use Data::Dumper;
+
+my $service = $ARGV[0] or die "Please add service as argument\n";
+
+my $url = ' http://localhost:8500/v1/agent/members';
+my $response = decode_json(get $url);
+die 'Error getting $url' unless defined $response;
+
+my $filter = undef;
+foreach my $key (@{$response}) {
+$filter->{$key->{Name}} = $key->{Addr} if ($key->{Name} =~ /^$service/); 
+}
+
+foreach my $host (sort keys %$filter) {
+print $host . "=" . $filter->{$host}."\n"
+}
+print "No data\n" if (!(keys %{$filter}))  
