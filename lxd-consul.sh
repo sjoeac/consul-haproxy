@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 
+# set consul version
 consul_version='0.6.4'
 
-
 # container names
-# container names
-#filename=$2
+filename=mp_containers.txt
 while read line
 do
     names+=("$line")
-done < mp_containers.txt
+done < $filename
 
 command_exists () {
   type "$1" &> /dev/null ;
@@ -44,8 +43,10 @@ stop(){
 
 restart(){
 	echo 'restarting consul containers...'
-	stop
-	start
+  for name in "${names[@]}";
+    do
+    lxc exec $name reboot
+  done
 }
 
 destroy(){
