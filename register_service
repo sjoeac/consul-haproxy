@@ -1,0 +1,19 @@
+#!/usr/bin/perl
+
+use LWP::Simple;
+use JSON;
+use Data::Dumper;
+use LWP::UserAgent;
+
+my $service = $ARGV[0] or die "Please add Service / Port as arguments\n";
+my $port = $ARGV[1] or die "Please add Service / Port as arguments\n";
+my $url = 'http://localhost:8500/v1/agent/service/register';
+my $json = "{\"ID\":\"$service\", \"Name\":\"$service\",\"Port\":$port}";
+my $ua = new LWP::UserAgent();
+$response = $ua->post($url, Content => $json);
+if ( $response->is_success() ) {
+    print("SUCCESSFUL \n");
+}
+else {
+    print("ERROR: " . $response->status_line());
+}
