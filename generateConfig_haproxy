@@ -1,0 +1,73 @@
+#!/usr/bin/perl
+
+use LWP::Simple;
+use JSON;
+use Data::Dumper;
+
+my $service = $ARGV[0] or die "Please add service as argument\n";
+my $url = ' http://localhost:8500/v1/agent/members';
+my $response = decode_json(get $url);
+die 'Error getting $url' unless defined $response;
+
+my $first_ip = undef;
+my $filter = undef;
+foreach my $key (@{$response}) {
+$filter->{$key->{Name}} = $key->{Addr} if ($key->{Name} =~ /^$service/); 
+$first_ip = $key->{Addr};  
+}
+
+my $url = 'http://' . $first_ip . ':8500/v1/agent/services';
+my $response = decode_json(get $url);
+die 'Error getting $url' unless defined $response;
+my $port = $response->{$service}->{'Port'};
+my $header_data = <<EOF;
+global
+        log 127.0.0.1 local2
+        chroot /var/lib/haproxy
+        user haproxy
+        group haproxy
+        stats socket /tmp/haproxy
+
+defaults
+        log     global
+        mode    http
+        option  httplog
+        option  dontlognull
+        timeout connect 5000
+        timeout client 50000
+        timeout server 50000
+        errorfile 400 /etc/haproxy/errors/400.http
+        errorfile 403 /etc/haproxy/errors/403.http
+        errorfile 408 /etc/haproxy/errors/408.http
+        errorfile 500 /etc/haproxy/errors/500.http
+        errorfile 502 /etc/haproxy/errors/502.http
+        errorfile 503 /etc/haproxy/errors/503.http
+        errorfile 504 /etc/haproxy/errors/504.http
+        stats enable
+        stats uri /haproxy?stats
+        stats auth admin:admin
+
+frontend http
+        bind *:$port
+        default_backend web-backend
+
+backend web-backend
+        balance roundrobin
+        cookie SESSIONID insert indirect nocache
+EOF
+
+
+my $footer_data;
+foreach my $host (sort keys %$filter) {
+my $url = 'http://' . $filter->{$host} . ':8500/v1/agent/services';
+my $response = decode_json(get $url);
+die 'Error getting $url' unless defined $response;
+$footer_data .= "        server " . $host . " " . $filter->{$host} . ":" . $response->{$service}->{'Port'} . 
+                 " cookie " . $host . " check" ."\n";
+}
+
+print "No data\n;exit;" if (!(keys %{$filter})); 
+print $header_data.$footer_data;
+
+
+
