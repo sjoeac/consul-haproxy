@@ -66,8 +66,13 @@ $footer_data .= "        server " . $host . " " . $filter->{$host} . ":" . $resp
                  " cookie " . $host . " check" ."\n";
 }
 
-print "No data\n;exit;" if (!(keys %{$filter})); 
+if (!(keys %{$filter})){
+    print "No Data...\n";
+    exit 0;
+}
+
 print $header_data.$footer_data;
-
-
-
+print "\n\nCopying New Config...\n";
+system (" echo '$header_data.$footer_data' > /tmp/haproxy.cfg");
+sleep 2;
+system (" cp -v /tmp/haproxy.cfg /etc/haproxy/haproxy.cfg.new; service haproxy restart");
