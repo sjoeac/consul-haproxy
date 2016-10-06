@@ -7,21 +7,21 @@ use Data::Dumper;
 my $service = $ARGV[0] or die "Please add service as argument\n";
 
 my $url = ' http://localhost:8500/v1/agent/members';
-my $response = decode_json(get $url);
-die 'Error getting $url' unless defined $response;
+my $response = (get $url);
+die "Error connecting to $url" unless defined $response;
+$response = decode_json ($response);
 
 my $filter = undef;
 foreach my $key (@{$response}) {
-$filter->{$key->{Name}} = $key->{Addr} if ($key->{Name} =~ /^$service/); 
+    $filter->{$key->{Name}} = $key->{Addr} if ($key->{Name} =~ /^$service/); 
 }
 
 
 foreach my $host (sort keys %$filter) {
-my $url = 'http://' . $filter->{$host} . ':8500/v1/agent/services';
-
-my $response = decode_json(get $url);
-die 'Error getting $url' unless defined $response;
-print $host . "=" . $filter->{$host}. ":" . $response->{$service}->{'Port'} . "\n";
+    my $url = 'http://' . $filter->{$host} . ':8500/v1/agent/services';
+    my $response = decode_json(get $url);
+    die 'Error getting $url' unless defined $response;
+    print $host . "=" . $filter->{$host}. ":" . $response->{$service}->{'Port'} . "\n";
 }
 
 print "No data\n" if (!(keys %{$filter}))  
