@@ -78,4 +78,4 @@ print $header_data.$footer_data;
 print "\n\nCopying New Config...\n";
 system (" echo '$header_data.$footer_data' > /tmp/haproxy.cfg");
 sleep 2;
-system (" cp -v /tmp/haproxy.cfg /etc/haproxy/haproxy.cfg.new; service haproxy restart");
+system (" cp -v /tmp/haproxy.cfg /etc/haproxy/haproxy.cfg; service haproxy restart");
