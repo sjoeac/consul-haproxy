@@ -11,6 +11,6 @@ die 'Error getting $url' unless defined $response;
 print "No data\n" if (!( @{$response}));
 
 foreach my $key (@{$response}) {
-print $key->{Node} . "==" . $key->{Address} . "\n"
+print $key->{Node} . "|" . $key->{Address} . "|" . $key->{ServicePort} . "\n"
 }
 
