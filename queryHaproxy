@@ -5,12 +5,10 @@ use JSON;
 use Data::Dumper;
 
 my $service = $ARGV[0] or die "Please add service as argument\n";
-my $url = 'http://localhost:8500/v1/catalog/service/' . $service;
+my $url = 'http://localhost:8500/v1/health/service/' . $service;
 my $response = decode_json(get $url);
 die 'Error getting $url' unless defined $response;
 print "No data\n" if (!( @{$response}));
 
-foreach my $key (@{$response}) {
-print $key->{Node} . "|" . $key->{Address} . "|" . $key->{ServicePort} . "\n"
-}
+print Dumper ($response);
 
