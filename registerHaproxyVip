@@ -12,26 +12,12 @@ $service = $service . "_haproxy";
 
 my $ua = new LWP::UserAgent();
 
-#Verify if Haproxy has already registered vip details
-my $url_v = 'http://localhost:8500/v1/kv/' . $service . '/vip_data?raw';
-$response = $ua->get($url_v);
-if ($response->{_rc} == 200){
-print "ALREADY REGISTERED\n";
-exit 0;
-}
-
 #Register Haproxy service 
 my $url1 = 'http://localhost:8500/v1/agent/service/register';
-my $json = {"ID"=>"$service", "Name"=>"$service", "Port"=> int $port};
+my $json = {"ID"=>"$service", "Name"=>"$service", "Address"=>"$vip", "Port"=> int $port};
 $json = encode_json($json) ;
 $response = $ua->post($url1,'Content-Type' => 'application/json',  'Content' =>$json);
-
-#Register Vip, port details
-my $url2 = 'http://localhost:8500/v1/kv/' . $service . '/vip_data';
-my $json2 = {"vip"=> "$vip", "port"=> "$port"};
-$json2 = encode_json($json2) ;
-my $response2 = $ua->put($url2,'Content-Type' => 'application/json',  'Content' =>$json2);
-checkResponse($response2);
+checkResponse($response);
 
 
 sub checkResponse {
