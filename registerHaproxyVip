@@ -5,10 +5,11 @@ use JSON;
 use Data::Dumper;
 use LWP::UserAgent;
 
-my $vip = $ARGV[0] or die "Please add <Vip> <Port> <Service> as arguments\n";
-my $port = $ARGV[1] or die "Please add <Vip> <Port> <Service> as arguments\n";
-my $service = $ARGV[2] or die "Please add <Vip> <Port> <Service> as arguments\n";
+my $vip = $ARGV[0] or die usage();
+my $port = $ARGV[1] or die usage();
+my $service = $ARGV[2] or die usage();
 $service = $service . "-haproxy";
+
 die "Port should be number\n" unless $port=~/^\d+$/;
 
 my $ua = new LWP::UserAgent();
@@ -29,4 +30,13 @@ sub checkResponse {
     else {
         print("ERROR: " . $response->status_line());
     }
+}
+
+sub usage {
+'Please add <Vip> <Port> <Service> as arguments
+
+e.g:
+registerHaproxyVip 10.22.75.75 9959 mp
+
+'
 }
