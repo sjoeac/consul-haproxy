@@ -8,6 +8,7 @@ use Sys::Hostname;
 
 my $port = $ARGV[0] or die "Please add <Port> <Service> as arguments\n";
 my $service = $ARGV[1] or die "Please add <Port> <Service> as arguments\n";
+die "Port should be number\n" unless $port=~/^\d+$/;
 
 my $ua = new LWP::UserAgent();
 

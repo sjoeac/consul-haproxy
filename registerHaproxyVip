@@ -9,6 +9,7 @@ my $vip = $ARGV[0] or die "Please add <Vip> <Port> <Service> as arguments\n";
 my $port = $ARGV[1] or die "Please add <Vip> <Port> <Service> as arguments\n";
 my $service = $ARGV[2] or die "Please add <Vip> <Port> <Service> as arguments\n";
 $service = $service . "-haproxy";
+die "Port should be number\n" unless $port=~/^\d+$/;
 
 my $ua = new LWP::UserAgent();
 
