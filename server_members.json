@@ -5,6 +5,6 @@
     "log_level": "INFO",
     "bootstrap": false,
     "skip_leave_on_interrupt": true,
-    "start_join": ["10.22.75.51"],
+    "start_join": ["leader_ip"],
     "ui": true
 }
