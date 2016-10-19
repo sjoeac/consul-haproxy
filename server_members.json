@@ -5,6 +5,7 @@
     "log_level": "INFO",
     "bootstrap": false,
     "skip_leave_on_interrupt": true,
+    "client_addr": "0.0.0.0",
     "start_join": ["leader_ip"],
     "ui": true
 }
