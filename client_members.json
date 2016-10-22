@@ -1,11 +1,10 @@
 {
-    "server": true,
+    "server": false,
     "datacenter": "lxd-consul",
     "data_dir": "/consul/data",
     "log_level": "INFO",
     "skip_leave_on_interrupt": true,
     "client_addr": "0.0.0.0",
     "start_join": ["leader_ip"]
-    "ui": true
 }
 
