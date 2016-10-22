@@ -1,0 +1,76 @@
+http calls:
+--------------
+curl localhost:8500/v1/agent/members
+curl localhost:8500/v1/agent/services
+curl localhost:8500/v1/agent/checks
+curl localhost:8500/v1/catalog/nodes
+curl localhost:8500/v1/catalog/services
+curl localhost:8500/v1/catalog/service/mp
+
+curl localhost:8500/v1/catalog/service/mp_haproxy
+curl http://localhost:8500/v1/health/service/mp
+
+
+http://agiletesting.blogspot.in/2014/11/service-discovery-with-consul-and.html
+
+keyvalue store example:
+curl -X PUT -H "Content-Type: application/json" -d '{"vip": "10.10.55.75", "port": "8344"}' http://localhost:8500/v1/kv/mp/vip_data
+curl -X PUT -d 23444 http://localhost:8500/v1/kv/service/mp/maxconn
+curl -X PUT -d 3444 http://localhost:8500/v1/kv/mp/timeout
+curl -X GET  http://localhost:8500/v1/kv/mp/timeout?raw
+
+Consul Template integration
+timeout            {{key "mp/timeout"}}
+
+
+
+
+https://sreeninet.wordpress.com/2016/04/17/service-discovery-with-consul/
+https://github.com/JoergM/consul-examples/tree/master/http_api
+
+
+
+Runs:
+/usr/bin/consul-template  -template="/root/haproxy.ctmpl:/tmp/haproxy.conf:service haproxy reload" -once 
+/usr/bin/consul-template  -template="/root/haproxy.ctmpl:/tmp/haproxy.conf:consul reload" -once 
+/usr/bin/consul-template  -template="/tmp/haproxy.conf.ctmpl:/tmp/haproxy.conf"
+/usr/bin/consul agent -server -bootstrap -config-dir /consul/server
+
+
+Register Services as cron every 10 mins.
+----------------------
+./registerHaproxyVip 10.10.75.75 9959 mp
+./registerService 9959 mp
+
+curl -X PUT -d @service.json localhost:8500/v1/agent/service/register
+The file service.json contains the service definition like this:
+
+{
+  "ID": "example2",
+  "Name": "example2",
+  "Tags": [
+    "specific",
+    "v1"
+  ],
+  "Address": "127.0.0.1",
+  "Port": 8000,
+}
+
+
+export CONSUL_SERVICE_NAME=mp
+export CONSUL_HA_SERVICE_NAME=mp-haproxy
+
+
+frontend http
+        {{$service_ha := env "CONSUL_HA_SERVICE_NAME"}}
+        {{if service $service_ha}}{{with index (service $service_ha) 0}}bind {{.Address}}:{{.Port}}{{ end }}{{ end }}
+        default_backend web-backend
+
+
+backend web-backend
+        balance roundrobin
+        cookie SESSIONID insert indirect nocache
+        {{$service := env "CONSUL_SERVICE_NAME"}}{{range service $service }}
+
+
+
