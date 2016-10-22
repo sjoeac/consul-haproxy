@@ -34,7 +34,11 @@ Runs:
 /usr/bin/consul-template  -template="/root/haproxy.ctmpl:/tmp/haproxy.conf:service haproxy reload" -once 
 /usr/bin/consul-template  -template="/root/haproxy.ctmpl:/tmp/haproxy.conf:consul reload" -once 
 /usr/bin/consul-template  -template="/tmp/haproxy.conf.ctmpl:/tmp/haproxy.conf"
+
 /usr/bin/consul agent -server -bootstrap -config-dir /consul/server
+
+
+
 
 
 Register Services as cron every 10 mins.
@@ -66,11 +70,12 @@ frontend http
         {{if service $service_ha}}{{with index (service $service_ha) 0}}bind {{.Address}}:{{.Port}}{{ end }}{{ end }}
         default_backend web-backend
 
-
 backend web-backend
         balance roundrobin
         cookie SESSIONID insert indirect nocache
-        {{$service := env "CONSUL_SERVICE_NAME"}}{{range service $service }}
+        {{$service := env "CONSUL_SERVICE_NAME"}}
+        {{range service $service}}
+        server {{.Node}} {{.Address}}:{{.Port}}{{end}}
 
-
+                                                                                                                                    39,0-1        Bot
 
