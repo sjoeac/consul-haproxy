@@ -1,0 +1,55 @@
+#!/usr/bin/perl
+
+use LWP::UserAgent;
+use LWP::Simple;
+use JSON;
+use Data::Dumper;
+
+my $service = $ARGV[0] or die "Please add service as argument\n";
+my $host = 'http://localhost:8500';
+
+#Get master IP
+my $url_master= $host . '/v1/kv/service/mp/master?raw';
+my $master_ip = get $url_master;
+die 'Error getting Master IP' unless defined $master_ip;
+
+#check if master IP is healthy
+my $url_members= $host . '/v1/agent/members';
+my $response_members = decode_json(get $url_members);
+
+foreach my $key (@{$response_members}) {
+ if ($master_ip eq  $key->{'Addr'}) {
+      if ( $key->{'Status'} == 1 ){
+         print "Master IP is healthy\n";
+         exit 0;
+      }
+ }
+}
+
+#If master IP is unhealthy assign a new one.
+my $url = $host . '/v1/health/service/' . $service;
+my $response = decode_json(get $url);
+die 'Error getting $url' unless defined $response;
+die "No data from $url;" if (!( @{$response}));
+
+#If master IP is unhealthy assign a new one.
+my $url = $host . '/v1/health/service/' . $service;
+my $response = decode_json(get $url);
+die 'Error getting $url' unless defined $response;
+die "No data from $url;" if (!( @{$response}));
+
+foreach my $key (@{$response}) {
+    if ($key->{'Checks'}->[0]->{'Status'} eq 'passing' ) {
+        updateMasterIP($key->{'Node'}->{'Address'});
+        last;
+    }
+
+}
+
+sub updateMasterIP {
+    my $master_ip = shift;
+    my $url_master= $host . '/v1/kv/service/mp/master';
+    $response = ` curl -X PUT -d $master_ip $url_master`;
+    print $response;
+}
+
