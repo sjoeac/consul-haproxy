@@ -29,15 +29,7 @@ foreach my $key (@{$response_members}) {
 #If master IP is unhealthy assign a new one.
 my $url = $host . '/v1/health/service/' . $service;
 my $response = decode_json(get $url);
-die 'Error getting $url' unless defined $response;
 die "No data from $url;" if (!( @{$response}));
-
-#If master IP is unhealthy assign a new one.
-my $url = $host . '/v1/health/service/' . $service;
-my $response = decode_json(get $url);
-die 'Error getting $url' unless defined $response;
-die "No data from $url;" if (!( @{$response}));
-
 foreach my $key (@{$response}) {
     if ($key->{'Checks'}->[0]->{'Status'} eq 'passing' ) {
         updateMasterIP($key->{'Node'}->{'Address'});
@@ -48,8 +40,24 @@ foreach my $key (@{$response}) {
 
 sub updateMasterIP {
     my $master_ip = shift;
-    my $url_master= $host . '/v1/kv/service/mp/master';
-    $response = ` curl -X PUT -d $master_ip $url_master`;
-    print $response;
+    my $ua = LWP::UserAgent->new;
+
+    # set custom HTTP request header fields
+    my $req = HTTP::Request->new(PUT => $url_master);
+    $req->header('content-type' => 'application/json');
+
+    # add POST data to HTTP request body
+    my $post_data = $master_ip;
+    $req->content($post_data);
+
+    my $resp = $ua->request($req);
+    if ($resp->is_success) {
+        my $message = $resp->decoded_content;
+        print "Received reply: $message\n";
+    }
+    else {
+        print "HTTP POST error code: ", $resp->code, "\n";
+        print "HTTP POST error message: ", $resp->message, "\n";
+    }
 }
 
