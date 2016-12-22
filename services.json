@@ -1,0 +1,4 @@
+{
+"host" : "http://localhost:8500",
+"services" : ["mp", "mp"]
+}
