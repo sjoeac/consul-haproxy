@@ -45,7 +45,7 @@ sub main {
             if ( $key->{'Status'} == 1 ){
                  print $time . "Master IP is healthy\n";
                  print $time . "Processing Completed\n"; 
-                 exit 0;
+                 last;
             }  
          } 
     }
