@@ -4,60 +4,84 @@ use LWP::UserAgent;
 use LWP::Simple;
 use JSON;
 use Data::Dumper;
+use POSIX qw(strftime);
 
-my $service = $ARGV[0] or die "Please add service as argument\n";
-my $host = 'http://localhost:8500';
+my $time = strftime "%F %T", localtime;
+$time .= ' - ';
+print $time . "Processing Started\n"; 
 
-#Get master IP
-my $url_master= $host . '/v1/kv/service/mp/master?raw';
-my $master_ip = get $url_master;
-die 'Error getting Master IP' unless defined $master_ip;
+my $configFile = $ARGV[0] or die "Please provide config file as argument\n";
+die $time . "Please provide valid config file as argument" unless $configFile=~/.json$/;
 
-#check if master IP is healthy
-my $url_members= $host . '/v1/agent/members';
-my $response_members = decode_json(get $url_members);
 
-foreach my $key (@{$response_members}) {
- if ($master_ip eq  $key->{'Addr'}) {
-      if ( $key->{'Status'} == 1 ){
-         print "Master IP is healthy\n";
-         exit 0;
-      }
- }
+my $json;
+{
+  local $/; #Enable 'slurp' mode
+  open my $fh, "<", $configFile;
+  $json = <$fh>;
+  close $fh;
 }
 
-#If master IP is unhealthy assign a new one.
-my $url = $host . '/v1/health/service/' . $service;
-my $response = decode_json(get $url);
-die "No data from $url;" if (!( @{$response}));
-foreach my $key (@{$response}) {
-    if ($key->{'Checks'}->[0]->{'Status'} eq 'passing' ) {
-        updateMasterIP($key->{'Node'}->{'Address'});
-        last;
+my $configData = decode_json($json);
+    foreach my $service (@{$configData->{"services"}}){
+        main($service);
     }
 
+
+sub main {
+    my $service = shift;
+    my $host = $configData->{host};
+    #Get master IP
+    my $url_master= $host . '/v1/kv/service/' . $service . '/master?raw';
+    my $master_ip = get $url_master;
+    die $time .  'Error getting Master IP' unless defined $master_ip;
+
+    #check if master IP is healthy
+    my $url_members= $host . '/v1/agent/members';
+    my $response_members = decode_json(get $url_members);
+
+    foreach my $key (@{$response_members}) {
+        if ($master_ip eq  $key->{'Addr'}) {
+            if ( $key->{'Status'} == 1 ){
+                 print $time . "Master IP is healthy\n";
+                 print $time . "Processing Completed\n"; 
+                 exit 0;
+            }  
+         } 
+    }
+
+    #If master IP is unhealthy assign a new one.
+    my $url = $host . '/v1/health/service/' . $service;
+    my $response = decode_json(get $url);
+    die $time . "Error getting $url" unless defined $response;
+    foreach my $key (@{$response}) {
+        if ($key->{'Checks'}->[0]->{'Status'} eq 'passing' ) {
+            updateMasterIP($key->{'Node'}->{'Address'}, $url_master);
+            last;
+         }
+    }
+    print $time . "Processing Completed\n"; 
 }
+
 
 sub updateMasterIP {
     my $master_ip = shift;
+    my $url_master = shift;
     my $ua = LWP::UserAgent->new;
-
     # set custom HTTP request header fields
     my $req = HTTP::Request->new(PUT => $url_master);
     $req->header('content-type' => 'application/json');
-
     # add POST data to HTTP request body
     my $post_data = $master_ip;
     $req->content($post_data);
-
+  
     my $resp = $ua->request($req);
     if ($resp->is_success) {
         my $message = $resp->decoded_content;
-        print "Received reply: $message\n";
+        print $time . "Received reply: $message\n";
     }
     else {
-        print "HTTP POST error code: ", $resp->code, "\n";
-        print "HTTP POST error message: ", $resp->message, "\n";
+        print $time . "HTTP POST error code: ", $resp->code, "\n";
+        print $time . "HTTP POST error message: ", $resp->message, "\n";
     }
 }
-
